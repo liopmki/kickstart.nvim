@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -308,12 +308,12 @@ require('lazy').setup({
 
         -- `build` is used to run some command when the plugin is installed/updated.
         -- This is only run then, not every time Neovim starts up.
-        build = 'make',
+        build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build',
 
         -- `cond` is a condition used to determine whether this plugin should be
         -- installed and loaded.
         cond = function()
-          return vim.fn.executable 'make' == 1
+          return vim.fn.executable 'cmake' == 1
         end,
       },
       { 'nvim-telescope/telescope-ui-select.nvim' },
@@ -569,7 +569,17 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        -- LSP
+        clangd = {}, -- c/cpp
+        html = {}, -- html
+        cssls = {}, -- css
+        vtsls = {}, -- javascript
+        tailwindcss = { -- TailwindCSS
+          filetypes_exclude = { 'markdown' },
+        },
+        marksman = {}, -- Markdown
+        pyright = {}, -- Python
+        svelte = {}, -- Svelte
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -610,7 +620,11 @@ require('lazy').setup({
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
+        -- DAP, Linter, Formatter
         'stylua', -- Used to format Lua code
+        'prettierd',
+        'isort',
+        'black',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -657,6 +671,16 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        html = { 'prettierd', 'prettier', stop_after_first = true },
+        css = { 'prettierd', 'prettier', stop_after_first = true },
+        scss = { 'prettierd', 'prettier', stop_after_first = true },
+        less = { 'prettierd', 'prettier', stop_after_first = true },
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        typescript = { 'prettierd', 'prettier', stop_after_first = true },
+        jsx = { 'prettierd', 'prettier', stop_after_first = true },
+        tsx = { 'prettierd', 'prettier', stop_after_first = true },
+        markdown = { 'prettierd', 'prettier', stop_after_first = true },
+        python = { 'isort', 'black' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -686,12 +710,12 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
       },
       'saadparwaiz1/cmp_luasnip',
@@ -733,13 +757,13 @@ require('lazy').setup({
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          -- ['<C-y>'] = cmp.mapping.confirm { select = true },
 
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
-          --['<CR>'] = cmp.mapping.confirm { select = true },
-          --['<Tab>'] = cmp.mapping.select_next_item(),
-          --['<S-Tab>'] = cmp.mapping.select_prev_item(),
+          ['<CR>'] = cmp.mapping.confirm { select = true },
+          ['<Tab>'] = cmp.mapping.select_next_item(),
+          ['<S-Tab>'] = cmp.mapping.select_prev_item(),
 
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
@@ -789,6 +813,7 @@ require('lazy').setup({
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
     'folke/tokyonight.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
+    enabled = false,
     init = function()
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
@@ -797,6 +822,13 @@ require('lazy').setup({
 
       -- You can configure highlights by doing something like:
       vim.cmd.hi 'Comment gui=none'
+    end,
+  },
+  {
+    'rebelot/kanagawa.nvim',
+    priority = 1000,
+    init = function()
+      vim.cmd.colorscheme 'kanagawa'
     end,
   },
 
@@ -881,10 +913,10 @@ require('lazy').setup({
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -892,7 +924,7 @@ require('lazy').setup({
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
