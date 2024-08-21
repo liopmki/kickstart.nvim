@@ -680,6 +680,7 @@ require('lazy').setup({
         jsx = { 'prettierd', 'prettier', stop_after_first = true },
         tsx = { 'prettierd', 'prettier', stop_after_first = true },
         markdown = { 'prettierd', 'prettier', stop_after_first = true },
+        yaml = { 'prettierd', 'prettier', stop_after_first = true },
         python = { 'isort', 'black' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
